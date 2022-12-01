@@ -5,10 +5,34 @@ import (
 	enc "encore/encrypt"
 	sys "encore/system"
 	"strconv"
+	"time"
 
 	cnf "encore/config"
 	"fmt"
 )
+
+func Relazy() {
+	fmt.Println("")
+
+}
+
+func Timestamp() string {
+	currentTime := time.Now()
+	var timestamp string = currentTime.Format("01-02-2006 3:4:5")
+	return timestamp
+}
+
+func Start_log() {
+	var msg string = "LOG START @ " + Timestamp() + "\n\n"
+	sys.WriteToFile(msg, cnf.Logdir, "write")
+}
+
+func Write_log(data string) {
+	var timestamp string = Timestamp()
+	var log_data string = data + " @ " + timestamp + "\n\n"
+
+	sys.WriteToFile(log_data, cnf.Logdir, "append")
+}
 
 func Show_help() {
 	// Help just makes things colored blue
@@ -23,27 +47,28 @@ func Show_help() {
 
 }
 
-func generate_keys() {
+func Generate_keys() {
 	sys.Warning("Regenerating keys and indexs")
 
-	masterdir := cnf.Plnjson + "/" + "master.json"
+	var master_json_directory string = cnf.Plnjson + "/" + "master.json"
 
 	// Deleting systemkey
 	sys.DeleteFile(cnf.Systemkey)
-	sys.DeleteFile(masterdir)
+	sys.DeleteFile(master_json_directory)
 
 	// add part to generate systemkey
-	key := enc.Create_key()
-	sys.WriteToFile(key, cnf.Systemkey)
+	var key string = enc.Create_key()
+	sys.WriteToFile(key, cnf.Systemkey, "write")
 
 	// Getting integrity
-	hash, msg := sys.Hash_file_md5(cnf.Systemkey)
-	if msg != nil {
-		sys.Warning(msg.Error())
+	hash, err := sys.Hash_file_md5(cnf.Systemkey)
+	if err != nil {
+		//  This is a warning because there will be an option to ignore checking md5 sums
+		sys.Handle_err(err, "warn")
 	}
 
 	// Creating the JSON
-	index := map[string]string{
+	var index = map[string]string{
 		"version":  Version(),
 		"number":   "0",
 		"location": cnf.Systemkey,
@@ -51,32 +76,31 @@ func generate_keys() {
 	}
 
 	// write master json
-	bytes, _ := json.MarshalIndent(index, "", "\t")
-	sys.WriteToFile(string(bytes), masterdir)
+	bytes, err := json.MarshalIndent(index, "", "  ")
+	sys.Handle_err(err, "break")
+
+	sys.WriteToFile(string(bytes), master_json_directory, "write")
 
 	for i := cnf.Key_cur; i <= cnf.Key_max; i++ {
 		// Delete keys
-		keydir := cnf.Keydir + "/" + strconv.Itoa(i) + ".dk"
-		indexdir := cnf.Plnjson + "/" + strconv.Itoa(i) + ".json"
-
-		sys.DeleteFile(keydir)
-		sys.DeleteFile(indexdir)
+		var key_path string = cnf.Keydir + "/" + strconv.Itoa(i) + ".dk"
+		var index_path string = cnf.Plnjson + "/" + strconv.Itoa(i) + ".json"
 
 		// Recreating
-		key := enc.Create_key()
-		sys.WriteToFile(key, keydir)
+		var key string = enc.Create_key()
+		sys.WriteToFile(key, key_path, "write")
 
 		// Getting integrity
-		hash, msg := sys.Hash_file_md5(keydir)
+		hash, msg := sys.Hash_file_md5(key_path)
 		if msg != nil {
-			sys.Warning(msg.Error())
+			sys.Handle_err(err, "warn")
 		}
 
 		// Creating the JSONs
-		index := map[string]string{
+		var index = map[string]string{
 			"version":  Version(),
 			"number":   strconv.Itoa(i),
-			"location": keydir,
+			"location": key_path,
 			"parent":   cnf.Systemkey,
 			"hash":     hash,
 		}
@@ -84,17 +108,28 @@ func generate_keys() {
 		// write indexdir
 		// two space seperationg
 		bytes, _ := json.MarshalIndent(index, "", "  ")
-		sys.WriteToFile(string(bytes), indexdir)
+		sys.WriteToFile(string(bytes), index_path, "write")
 
 	}
 }
 
-func Read() {
+func Read(data string, key string) bool {
 	// This is the part that will read stuff
-	var data string = "e7fdc50d0142fdb10453b642d7ab5f687vvaw84zhdfu7nczbf639016179fa5fa2f1296ba2873f4f67428c387573a6723aeb4ed4ef0ec7d22"
-	var key string = "j416wlr6345t331a74sp2iua69660886"
+	// do some validation
+
+	// create the temporary file in datadir
+
+	// decrypt the data
+
+	//  write to the temp file
+
+	// depending on config file replace the original file
+
+	// return bool for status
+
 	var real_shit string = enc.Decrypt(data, key)
 	sys.Pass(real_shit)
+	return true
 }
 
 func Write() {
@@ -113,12 +148,7 @@ func Version() string {
 func Initialize() {
 	sys.Pass("Running Initialization")
 
-	generate_keys()
+	Generate_keys()
 
 	Relazy()
-}
-
-func Relazy() {
-	fmt.Println("")
-
 }

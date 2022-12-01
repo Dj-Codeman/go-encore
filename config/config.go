@@ -6,7 +6,7 @@ const (
 	//  When keys are regenerated this folder will be emptyied
 	//  default /var/encore/data
 
-	datadir string = "/var/encore/data"
+	Datadir string = "/var/encore/data"
 
 	//  JSON This is where plan text maps will live
 	//  these are generated along side the keys
@@ -38,7 +38,7 @@ const (
 
 	// log dir
 
-	logdir string = "/var/log/encore/general"
+	Logdir string = "/var/log/encore/general"
 
 	//  key_max the limit of keys to generate
 	//  default=1000
@@ -55,7 +55,7 @@ const (
 	//  set 1 to use cp instead of mv when gatheing files to encrypt
 	//  default = false
 
-	soft_move bool = false
+	Soft_move bool = false
 
 	//  re-place file
 	//  the original path of files are stored when encrypted
@@ -63,12 +63,12 @@ const (
 	//  directory
 	//  default= true
 
-	re_place bool = true
+	Re_place bool = true
 
 	//  save on destroy
 	//  if you want the destroy function to recover the file before deleting
 	//  the encrypted copy set this to 1
 	//  default=1
 
-	leave_in_peace bool = true
+	Leave_in_peace bool = true
 )

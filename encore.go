@@ -49,7 +49,11 @@ func main() {
 			// ciphertest, key := enc.Encrypt(" 0dg3edetyhtiyhgzovglekukcpqy2ird5qpk7o1getdkmbjt659oivqs8z7un0y5220nx0cto4dug0hf18xh8ohiloc9zb342mfisub35ai1300agujx5bwxwqpnguw3")
 			// sys.Pass(enc.Decrypt(ciphertest, key))
 			// 1 def.Write()
-			def.Read()
+			// var data string = "e7fdc50d0142fdb10453b642d7ab5f687vvaw84zhdfu7nczbf639016179fa5fa2f1296ba2873f4f67428c387573a6723aeb4ed4ef0ec7d22"
+			// var key string = "j416wlr6345t331a74sp2iua69660886"
+			// def.Read(data, key)
+			def.Start_log()
+			def.Write_log("hello world")
 			// enc.Decrypt("2a07e90227936dc7e5b5b43d193aad955b6df34eecc4478393c1d70b3b3520586c343867386c616b6632346b3832316893c0c054c3e35a451cd3067e04decd0ba1789407da0d074061ee62a36f7e3c95", "9134425d9lc6e8t4sg7egm0135trx2w9")
 		} else {
 			sys.Invalid_op()
@@ -116,6 +120,5 @@ func main() {
 
 	}
 
-	sys.Pass("DONE")
 	os.Exit(0)
 }

@@ -8,7 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	sys "encore/system"
-	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -17,7 +16,6 @@ import (
 func Create_key() string {
 	rand.Seed(time.Now().UnixNano())
 	var charather_range string = "abcdefghijklmnopqrstuvwxyz123456789012345678901324569870"
-	// letters := "123456789012345678901324569870"
 
 	var key_bytes []byte = make([]byte, 32)
 
@@ -26,7 +24,6 @@ func Create_key() string {
 	}
 
 	var key string = string(key_bytes)
-	// key += "\n"
 
 	return key
 
@@ -60,7 +57,7 @@ func Encrypt(input string, key string) string {
 	var input_bytes []byte = PKCS5Padding([]byte(input), aes.BlockSize, len(input))
 	block, err := aes.NewCipher(key_bytes)
 	if err != nil {
-		panic(err)
+		sys.Handle_err(err, "break")
 	}
 	// Turning the input into bytes
 	var cipher_text []byte = make([]byte, len(input_bytes))
@@ -74,7 +71,7 @@ func Encrypt(input string, key string) string {
 
 	// adding IV to the end of the file
 	// Should be equivalent to hex.EncodeToString(iv_bytes)
-	iv := string(iv_bytes)
+	var iv string = string(iv_bytes)
 
 	hex_cipher_text += iv
 
@@ -92,28 +89,26 @@ func Encrypt(input string, key string) string {
 func Decrypt(input string, key string) string {
 
 	// getting the hmac
-	old_hmac := input[len(input)-64:]
+	var old_hmac string = input[len(input)-64:]
 
 	// removing the hmac from the file
-	etiv := strings.TrimSuffix(input, old_hmac)
+	var cipher_text_iv string = strings.TrimSuffix(input, old_hmac)
 
 	// regenerating new hmac and verifing
-	hash := hmac.New(sha256.New, []byte(etiv))
-	new_hmac := hex.EncodeToString([]byte(hash.Sum(nil)))
+	hash := hmac.New(sha256.New, []byte(cipher_text_iv))
+	var new_hmac string = hex.EncodeToString([]byte(hash.Sum(nil)))
 
 	// Eventually find a better comparison then if
 	if new_hmac == old_hmac {
 		// seperating iv from ciphertext
-		iv := etiv[len(etiv)-16:]
-		ciphertext := strings.TrimSuffix(etiv, iv)
+		var iv string = cipher_text_iv[len(cipher_text_iv)-16:]
+		var cipher_text string = strings.TrimSuffix(cipher_text_iv, iv)
 
 		// ciphertextdecoded, err := hex.DecodeString(ciphertext)
-		ciphertextdecoded, err := hex.DecodeString(ciphertext)
+		plain_text, _ := hex.DecodeString(cipher_text)
 
 		byte_key := []byte(key)
-
 		byte_iv := []byte(iv)
-		fmt.Println(byte_iv)
 
 		if len(byte_iv) <= 15 && len(iv) >= 17 {
 			sys.Break("Invalid IV size")
@@ -121,20 +116,18 @@ func Decrypt(input string, key string) string {
 
 		block, err := aes.NewCipher(byte_key)
 		if err != nil {
-			sys.Warning("a thing")
+			sys.Handle_err(err, "break")
 		}
 
 		// CBC mode always works in whole blocks.
-		if len(ciphertextdecoded)%aes.BlockSize != 0 {
+		if len(plain_text)%aes.BlockSize != 0 {
 			sys.Break("ciphertext is not a multiple of the block size")
 		}
 
-		fmt.Println(len(ciphertextdecoded))
-
 		mode := cipher.NewCBCDecrypter(block, byte_iv)
-		mode.CryptBlocks(ciphertextdecoded, ciphertextdecoded)
+		mode.CryptBlocks(plain_text, plain_text)
 
-		data := string(PKCS5UnPadding(ciphertextdecoded))
+		data := string(PKCS5UnPadding(plain_text))
 
 		return data
 
@@ -142,8 +135,7 @@ func Decrypt(input string, key string) string {
 		sys.Red("Error, unable to drcrypt file. It might have been encrypted")
 		sys.Break("by a diffrent key, or it's been tampered with")
 	}
-
-	return "I fucked up somewhere"
+	return string("What in the firery hell happened here")
 }
 
 func PKCS5Padding(ciphertext []byte, blockSize int, after int) []byte {

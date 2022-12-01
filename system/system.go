@@ -5,10 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
-	"math/rand"
 	"os"
-	"time"
+	"strconv"
 )
 
 const (
@@ -71,42 +69,61 @@ func Invalid_op() {
 	Break("Invalid option or number of arguments given run encore -h for help")
 }
 
-func WriteToFile(data string, location string) {
+func WriteToFile(data string, location string, append string) {
 	// preping data
 	var d = []byte(data)
 	// checking if file exists
-	if Existence(location) == true {
-		// default is to overwrite the file
-		if DeleteFile(location) == true { // file was deleted
+	if append == "write" {
+		if Existence(location) == true {
+			// default is to overwrite the file
+			if DeleteFile(location) == true { // file was deleted
 
+				file, err := os.OpenFile(location, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0400)
+				if err != nil {
+					Handle_err(err, "break")
+				}
+				if _, err := file.Write(d); err != nil {
+					file.Close() // ignore error; Write error takes precedence
+					Handle_err(err, "break")
+				}
+				if err := file.Close(); err != nil {
+					Handle_err(err, "break")
+				}
+			} else {
+				Break("Im lazy the file could not be deleted")
+			}
+
+		} else {
+			// Nothing needs to be deleted just write it
 			file, err := os.OpenFile(location, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0400)
 			if err != nil {
-				Break("Failed to create file")
+				Handle_err(err, "break")
 			}
 			if _, err := file.Write(d); err != nil {
 				file.Close() // ignore error; Write error takes precedence
-				log.Fatal(err)
+				Handle_err(err, "break")
 			}
 			if err := file.Close(); err != nil {
 				Break("File stream incorrectly terminated")
 			}
-		} else {
-			Break("Im lazy the file could not be deleted")
 		}
 
-	} else {
+	} else if append == "append" {
 		// Nothing needs to be deleted just write it
 		file, err := os.OpenFile(location, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0400)
 		if err != nil {
-			Break("Failed to create file")
+			Handle_err(err, "break")
 		}
 		if _, err := file.Write(d); err != nil {
 			file.Close() // ignore error; Write error takes precedence
-			log.Fatal(err)
+			Handle_err(err, "break")
 		}
 		if err := file.Close(); err != nil {
 			Break("File stream incorrectly terminated")
 		}
+
+	} else {
+		Warning("Invalid option given")
 	}
 
 }
@@ -115,7 +132,7 @@ func DeleteFile(filename string) bool {
 	if Existence(filename) == true {
 		del := os.Remove(filename)
 		if del != nil {
-			Warning("File not deleted")
+			Handle_err(del, "warn")
 			return false
 		}
 		return true
@@ -148,42 +165,24 @@ func Hash_file_md5(filePath string) (string, error) {
 	}
 	defer file.Close()
 	var hash = md5.New()
-	if _, err := io.Copy(hash, file); err != nil {
-		return returnMD5String, err
-	}
+
+	bytes, err := io.Copy(hash, file)
+	Handle_err(err, string(strconv.FormatInt(bytes, 10)))
+
 	var hashInBytes = hash.Sum(nil)[:16]
 	returnMD5String = hex.EncodeToString(hashInBytes)
 	return returnMD5String, nil
 }
 
-func Test1() {
-	for i := 1; i <= 43000; i++ {
-		Pass("Generating key")
+func Handle_err(msg error, action string) {
 
-		rand.Seed(time.Now().UnixNano())
-		letters := "abcdefghijklmnopqrstuvwxyz123456789012345678901324569870"
-
-		keyr := make([]byte, 128)
-
-		for i := range keyr {
-			keyr[i] = letters[rand.Int63()%int64(len(letters))]
-		}
-
-		key := string(keyr)
-		key += "\n"
-
-		Warning(key)
-
-		file, err := os.OpenFile("access.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if _, err := file.Write([]byte(key)); err != nil {
-			file.Close() // ignore error; Write error takes precedence
-			log.Fatal(err)
-		}
-		if err := file.Close(); err != nil {
-			log.Fatal(err)
-		}
+	var error_message string = msg.Error()
+	if action == "break" {
+		Break(error_message)
+	} else if action == "warn" {
+		Warning(error_message)
+	} else {
+		Warning(error_message)
 	}
+
 }
