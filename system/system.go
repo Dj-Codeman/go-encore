@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 )
 
 const (
@@ -165,9 +164,9 @@ func Hash_file_md5(filePath string) (string, error) {
 	}
 	defer file.Close()
 	var hash = md5.New()
-
-	bytes, err := io.Copy(hash, file)
-	Handle_err(err, string(strconv.FormatInt(bytes, 10)))
+	if _, err := io.Copy(hash, file); err != nil {
+		return returnMD5String, err
+	}
 
 	var hashInBytes = hash.Sum(nil)[:16]
 	returnMD5String = hex.EncodeToString(hashInBytes)

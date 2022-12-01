@@ -8,7 +8,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	sys "encore/system"
+	"io/ioutil"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -107,8 +109,8 @@ func Decrypt(input string, key string) string {
 		// ciphertextdecoded, err := hex.DecodeString(ciphertext)
 		plain_text, _ := hex.DecodeString(cipher_text)
 
-		byte_key := []byte(key)
-		byte_iv := []byte(iv)
+		var byte_key []byte = []byte(key)
+		var byte_iv []byte = []byte(iv)
 
 		if len(byte_iv) <= 15 && len(iv) >= 17 {
 			sys.Break("Invalid IV size")
@@ -127,7 +129,7 @@ func Decrypt(input string, key string) string {
 		mode := cipher.NewCBCDecrypter(block, byte_iv)
 		mode.CryptBlocks(plain_text, plain_text)
 
-		data := string(PKCS5UnPadding(plain_text))
+		var data string = string(PKCS5UnPadding(plain_text))
 
 		return data
 
@@ -139,15 +141,62 @@ func Decrypt(input string, key string) string {
 }
 
 func PKCS5Padding(ciphertext []byte, blockSize int, after int) []byte {
-	padding := (blockSize - len(ciphertext)%blockSize)
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	var padding int = (blockSize - len(ciphertext)%blockSize)
+	var padtext []byte = bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
 func PKCS5UnPadding(src []byte) []byte {
-	length := len(src)
-	unpadding := int(src[length-1])
+	var length int = len(src)
+	var unpadding int = int(src[length-1])
 	return src[:(length - unpadding)]
+}
+
+func Test() (string, string) {
+
+	// internal test
+	sys.Pass("Running internal testing")
+	// File sizes we're checking for
+	file_array := [4]int32{9518, 10000000, 100000000, 500000000}
+
+	// Any test bigger than 500mb takes literall minutes to run
+	// I want to keep the normal initializating quick
+	// maybe add a larger file test option
+
+	// 1024000000 1gb
+	// 3000000000 3gb
+	var charather_range string = "abcdefghijklmnopqrstuvwxyz1234567890"
+	for i := 0; i < len(file_array); i++ {
+		var Big_Data_Bytes []byte = make([]byte, file_array[i])
+
+		var k int
+		for k = range Big_Data_Bytes {
+			Big_Data_Bytes[k] = charather_range[rand.Intn(len(charather_range))]
+		}
+		var Big_Data_Legnth int = len(Big_Data_Bytes) / 1024
+		var Big_Data_Name string = "/tmp/encore/" + hex.EncodeToString([]byte(strconv.Itoa(Big_Data_Legnth))) + ".tmp"
+		// write bytes to name
+		// make folder if not exist /tmp/encore
+		sys.WriteToFile(string(Big_Data_Bytes), Big_Data_Name, "write")
+
+		fileBytes, _ := ioutil.ReadFile(Big_Data_Name)
+		// sys.Handle_err(err, "break")
+
+		var key string = Create_key()
+		var cipher_text string = Encrypt(string(fileBytes), key)
+
+		var Decrypted_Data string = Decrypt(cipher_text, key)
+
+		if Decrypted_Data != string(fileBytes) {
+			var msg string = "Error validating file :" + Big_Data_Name
+
+			return "Failed", msg
+		}
+	}
+
+	// sys.Handle_err(err, "warn")
+
+	return string("Pass"), ""
 }
 
 // -aes-256-cbc

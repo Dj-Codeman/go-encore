@@ -18,14 +18,14 @@ const (
 	//  will live. The json debug tool should be used to decrypt
 	//  and modify these files
 
-	encjson string = "/var/encore/maps"
+	Encjson string = "/var/encore/maps"
 
 	//  KEY These are the random encryption keys
 	//  128 bit strings for use with the encrypt script
 	//  https://www.fastsitephp.com/fr/documents/file-encryption-bash
 	//  default /opt/encore/keys
 
-	Keydir string = "/var/encore/keyz"
+	Keydir string = "/var/encore/keys"
 
 	//  SYSTEM KEY JSON file that contain location and key information
 	//  are encrypted using this key
@@ -34,7 +34,7 @@ const (
 	//  IF THIS KEY IS DELETED ALL DATA IS CONSIDERED LOST
 	//  default /opt/encore/keys/systemkey.dk
 
-	Systemkey string = "/etc/systemkey1.dk"
+	Systemkey string = "/etc/systemkey.dk"
 
 	// log dir
 
@@ -43,7 +43,7 @@ const (
 	//  key_max the limit of keys to generate
 	//  default=1000
 
-	Key_max int = 1
+	Key_max int = 10000
 
 	//  Works like a key min value
 	//  by key_cur and key_max the range from which keys are picked

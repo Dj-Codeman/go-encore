@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	enc "encore/encrypt"
 	sys "encore/system"
+	"io/ioutil"
 	"strconv"
 	"time"
 
@@ -23,6 +24,7 @@ func Timestamp() string {
 }
 
 func Start_log() {
+	sys.Pass("New log started")
 	var msg string = "LOG START @ " + Timestamp() + "\n\n"
 	sys.WriteToFile(msg, cnf.Logdir, "write")
 }
@@ -48,13 +50,9 @@ func Show_help() {
 }
 
 func Generate_keys() {
-	sys.Warning("Regenerating keys and indexs")
+	sys.Pass("Regenerating keys and indexs")
 
 	var master_json_directory string = cnf.Plnjson + "/" + "master.json"
-
-	// Deleting systemkey
-	sys.DeleteFile(cnf.Systemkey)
-	sys.DeleteFile(master_json_directory)
 
 	// add part to generate systemkey
 	var key string = enc.Create_key()
@@ -72,12 +70,13 @@ func Generate_keys() {
 		"version":  Version(),
 		"number":   "0",
 		"location": cnf.Systemkey,
+		"parent":   "-",
 		"hash":     hash,
 	}
 
 	// write master json
-	bytes, err := json.MarshalIndent(index, "", "  ")
-	sys.Handle_err(err, "break")
+	bytes, _ := json.MarshalIndent(index, "", "  ")
+	// sys.Handle_err(err, "break")
 
 	sys.WriteToFile(string(bytes), master_json_directory, "write")
 
@@ -111,6 +110,63 @@ func Generate_keys() {
 		sys.WriteToFile(string(bytes), index_path, "write")
 
 	}
+	sys.Pass("DONE")
+}
+
+func find_de_way(key string) string {
+	if key == "systemkey" {
+		var key_index_path string = cnf.Plnjson + "/master.json"
+		return key_index_path
+	} else {
+		var key_index_path string = cnf.Plnjson + "/" + key + ".json"
+		return key_index_path
+	}
+}
+
+func Fetch_keys(key string) string {
+	// creating a slut to contain the read json data
+	type key_index struct {
+		Hash        string `json:"hash"`
+		Parent      string `json:"parent"`
+		Location    string `json:"location"`
+		Number      string `json:"number"`
+		Key_version string `json:"version"`
+	}
+
+	var schrodingers_path string = find_de_way(key)
+
+	// Loading the json file
+	bytes, _ := ioutil.ReadFile(schrodingers_path)
+	// creating structure
+	var any_key_index key_index
+
+	msg := json.Unmarshal(bytes, &any_key_index)
+	if msg != nil {
+		sys.Handle_err(msg, "break")
+	}
+
+	if any_key_index.Key_version != Version() {
+		sys.Warning("Mismatch version warning: The version of encore used by this key is not the same")
+		sys.Warning("as the application version. Extract this data and re-initialize to garuntee")
+		sys.Warning("Data safety. Or don't ¯\\_(ツ)_/¯")
+	}
+
+	// checking the hashes
+	new_hash, err := sys.Hash_file_md5(any_key_index.Location)
+	if err != nil {
+		//  This is a warning because there will be an option to ignore checking md5 sums
+		sys.Handle_err(err, "warn")
+	}
+
+	// TODO	Fix this shis
+	if new_hash != any_key_index.Hash {
+		sys.Red("HASH FAULT: The key hash associated with the key does")
+		sys.Break("not match with the current hash. KEYS HAVE BEEN TAMPERED WITH")
+	}
+
+	key_bytes, _ := ioutil.ReadFile(any_key_index.Location)
+	return string(key_bytes)
+
 }
 
 func Read(data string, key string) bool {
@@ -148,7 +204,26 @@ func Version() string {
 func Initialize() {
 	sys.Pass("Running Initialization")
 
+	Start_log()
+
+	Write_log("Started initialization")
+
+	status, msg := enc.Test()
+	if status == "Pass" {
+		sys.Pass("DONE")
+	} else {
+		Write_log(msg)
+		sys.Break(msg)
+	}
+
 	Generate_keys()
 
-	Relazy()
+	sys.Pass("Testing key fetch functionality")
+	// make this a rand int
+	var msg1 string = "Random key fetched : " + Fetch_keys("5")
+	sys.Pass(msg1)
+	sys.Pass("DONE")
+
+	Write_log("Finished initialization")
+	sys.Pass("Initialization Finished")
 }
