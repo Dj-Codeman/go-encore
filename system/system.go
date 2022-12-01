@@ -22,7 +22,7 @@ func Warning(message string) {
 }
 
 func Break(message string) {
-	fmt.Println(string(ColorRed), message, string(ColorReset))
+	fmt.Println(string(ColorRed), "\x1B[1m", message, string(ColorReset))
 	os.Exit(0)
 }
 
@@ -36,7 +36,7 @@ func Help(message string) {
 }
 
 func Red(message string) {
-	fmt.Println(string(ColorRed), message, string(ColorReset))
+	fmt.Println(string(ColorRed), "\x1B[1m", message, string(ColorReset))
 }
 
 func Count_pos() int {

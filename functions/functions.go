@@ -158,7 +158,6 @@ func Fetch_keys(key string) string {
 		sys.Handle_err(err, "warn")
 	}
 
-	// TODO	Fix this shis
 	if new_hash != any_key_index.Hash {
 		sys.Red("HASH FAULT: The key hash associated with the key does")
 		sys.Break("not match with the current hash. KEYS HAVE BEEN TAMPERED WITH")
@@ -194,6 +193,10 @@ func Write() {
 	var key string = enc.Create_key()
 	sys.Pass(enc.Encrypt(data, key))
 	sys.Pass(key)
+}
+
+func Destroy() {
+	Relazy()
 }
 
 func Version() string {
