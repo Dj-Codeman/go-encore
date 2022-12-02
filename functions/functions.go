@@ -1,20 +1,23 @@
 package functions
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	cnf "encore/config"
 	enc "encore/encrypt"
 	sys "encore/system"
-	"io/ioutil"
-	"strconv"
-	"time"
-
-	cnf "encore/config"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func Relazy() {
 	fmt.Println("")
-
 }
 
 func Timestamp() string {
@@ -38,19 +41,42 @@ func Write_log(data string) {
 
 func Show_help() {
 	// Help just makes things colored blue
-	sys.Help("encore [-w] write [-r] read [-d] destroy [-i] initialize [--update] [--uninstall] [-v] version ")
+	sys.Help("encore [-w] write [-r] read [-d] destroy [-t] additional tests [-i] initialize [--update] [--uninstall] [-v] version ")
 	sys.Help("encore -w -i FILENAME [name] [owner]")
 	sys.Help("encore -r name owner ")
 	sys.Help("encore -d name owner ")
+	sys.Warning("encore -t Run additional tests *Normal users <= than 1000 keys* ")
+	sys.Warning("and files <= 500mb don't need this option")
 	sys.Help("encore -i **WARNING THIS WILL DELETE ANY STORED DATA AND KEYS** ")
 	sys.Help("encore update performs system wellness test then downloads the lates version of encore ")
 	sys.Help("Uninstall will delete all stored data and binaries associated with encore")
 	// fmt.Println("\n")
+	os.Exit(0)
+}
 
+func Update_Help() {
+	sys.Help("The only additional option for update is --force")
+	sys.Warning("Using --force may delete data or break this intallating")
+	sys.Red("We've all heard this before but with great power comes ")
+	sys.Break("great responsibility. Use this wisley.")
+}
+
+func Uninstall_Help() {
+	sys.Red("Make sure all your data has been read from this program")
+	sys.Red("Uninstall will indiscreminantly delete all data, keys, maps")
+	sys.Break("and anything else that has been created by the application")
 }
 
 func Generate_keys() {
 	sys.Pass("Regenerating keys and indexs")
+	// creating a slut to contain the read json data
+	type Key_Index struct {
+		Hash        string `json:"hash"`
+		Parent      string `json:"parent"`
+		Location    string `json:"location"`
+		Number      string `json:"number"`
+		Key_version string `json:"version"`
+	}
 
 	var master_json_directory string = cnf.Plnjson + "/" + "master.json"
 
@@ -65,17 +91,17 @@ func Generate_keys() {
 		sys.Handle_err(err, "warn")
 	}
 
-	// Creating the JSON
-	var index = map[string]string{
-		"version":  Version(),
-		"number":   "0",
-		"location": cnf.Systemkey,
-		"parent":   "-",
-		"hash":     hash,
-	}
+	// Creating the JSON with a strut
+	index := new(Key_Index)
+	index.Key_version = Version()
+	index.Number = "0"
+	index.Location = cnf.Systemkey
+	index.Parent = "-"
+	index.Hash = hash
 
 	// write master json
 	bytes, _ := json.MarshalIndent(index, "", "  ")
+
 	// sys.Handle_err(err, "break")
 
 	sys.WriteToFile(string(bytes), master_json_directory, "write")
@@ -95,14 +121,13 @@ func Generate_keys() {
 			sys.Handle_err(err, "warn")
 		}
 
-		// Creating the JSONs
-		var index = map[string]string{
-			"version":  Version(),
-			"number":   strconv.Itoa(i),
-			"location": key_path,
-			"parent":   cnf.Systemkey,
-			"hash":     hash,
-		}
+		// Creating the JSON with a strut
+		index := new(Key_Index)
+		index.Key_version = Version()
+		index.Number = strconv.Itoa(i)
+		index.Location = key_path
+		index.Parent = cnf.Systemkey
+		index.Hash = hash
 
 		// write indexdir
 		// two space seperationg
@@ -125,7 +150,7 @@ func find_de_way(key string) string {
 
 func Fetch_keys(key string) string {
 	// creating a slut to contain the read json data
-	type key_index struct {
+	type Key_Index struct {
 		Hash        string `json:"hash"`
 		Parent      string `json:"parent"`
 		Location    string `json:"location"`
@@ -138,7 +163,7 @@ func Fetch_keys(key string) string {
 	// Loading the json file
 	bytes, _ := ioutil.ReadFile(schrodingers_path)
 	// creating structure
-	var any_key_index key_index
+	var any_key_index Key_Index
 
 	msg := json.Unmarshal(bytes, &any_key_index)
 	if msg != nil {
@@ -187,12 +212,104 @@ func Read(data string, key string) bool {
 	return true
 }
 
-func Write() {
-	// this is the part that writes stuff
-	var data string = "Hello world"
-	var key string = enc.Create_key()
-	sys.Pass(enc.Encrypt(data, key))
-	sys.Pass(key)
+func Filename_Sanatization(filename string) string {
+	// Checking if the file name exists
+	if !filepath.IsAbs(filename) {
+		if strings.Contains(filename, "./") {
+			var new_file_string string = strings.ReplaceAll(filename, "./", "")
+			// getting the current working folder
+			working_directory, _ := os.Getwd()
+			// this should be the path
+			var object_path string = working_directory + "/" + new_file_string
+			// cheking if the path we created is valid
+			if sys.Existence(object_path) {
+				return object_path
+			} else {
+				sys.Warning("Path doesn't exist : " + object_path)
+				return "nil"
+			}
+
+		} else {
+			// getting the current working folder
+			working_directory, _ := os.Getwd()
+
+			// tack current working direcroy to file name
+			var object_path string = working_directory + "/" + filename
+			if sys.Existence(object_path) {
+				return object_path
+			} else {
+				sys.Warning("Path doesn't exist : " + object_path)
+				return "nil"
+			}
+
+		}
+	} else {
+		if sys.Existence(filename) {
+			return filename
+		} else {
+			sys.Warning("Path doesn't exist : " + filename)
+			return "nil"
+		}
+
+	}
+}
+
+func Write_preperation(dirty_object_path string, dirty_object_owner string, dirty_object_name string) (object_path string, object_owner string, object_name string) {
+
+	// checking if the filename has been validated
+	var clean_object_path string = Filename_Sanatization(dirty_object_path)
+	if clean_object_path != "nil" {
+		// testing if the map exists
+		var map_test string = cnf.Encjson + "/" + dirty_object_owner + "_" + dirty_object_name + ".json"
+		if sys.Existence(map_test) {
+			sys.Break("Choose a diffrent name")
+		} else {
+			return clean_object_path, dirty_object_owner, dirty_object_name
+		}
+
+	} else {
+		sys.Break("Invalid filename given")
+		return "", "", ""
+	}
+	sys.Break("Never thought i'd get this far")
+	return "", "", ""
+}
+
+func Write(object_path string, object_owner string, object_name string) bool {
+	rand.Seed(time.Now().UnixNano())
+
+	type Secret_Data_Index struct {
+		Version string `json:"version"`
+		Name    string `json:"object_name"`
+		Owner   string `json:"object_owner"`
+		Key     string `json:"key"`
+		Uid     string `json:"uid"`
+		Path    string `json:"origin_path"`
+		Dir     string `json:"data_path"`
+		// maybe later
+		// Hash    string `json:"hash"`
+	}
+
+	// turn this into a checksum ???
+	var key_int int = rand.Intn(cnf.Key_max - cnf.Key_cur + 1)
+	var key_data string = Fetch_keys(strconv.Itoa(key_int))
+	var uid_bytes []byte = []byte(key_data)[0:9]
+	var uid_data string = base64.StdEncoding.EncodeToString(uid_bytes)
+	var encrypted_data_path string = cnf.Datadir + "/" + uid_data
+
+	data_index := new(Secret_Data_Index)
+	data_index.Version = Version()
+	data_index.Name = object_name
+	data_index.Owner = object_owner
+	data_index.Key = strconv.Itoa(key_int)
+	data_index.Uid = uid_data
+	data_index.Path = object_path
+	data_index.Dir = encrypted_data_path
+	fmt.Print(data_index)
+
+	// sys.Pass(enc.Encrypt(data, key))
+	// sys.Pass(key)
+	return true
 }
 
 func Destroy() {
@@ -200,7 +317,7 @@ func Destroy() {
 }
 
 func Version() string {
-	var ver = "G0.00"
+	var ver = "G0.02"
 	return ver
 }
 
