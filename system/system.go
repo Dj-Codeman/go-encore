@@ -14,6 +14,7 @@ const (
 	ColorGreen  = "\u001b[32m"
 	ColorYellow = "\u001b[33m"
 	ColorBlue   = "\u001b[34m"
+	ColorBold   = "\x1B[1m"
 	ColorReset  = "\u001b[0m"
 )
 
@@ -22,7 +23,7 @@ func Warning(message string) {
 }
 
 func Break(message string) {
-	fmt.Println(string(ColorRed), "\x1B[1m", message, string(ColorReset))
+	fmt.Println(string(ColorRed), message, string(ColorReset))
 	os.Exit(0)
 }
 
@@ -36,10 +37,10 @@ func Help(message string) {
 }
 
 func Red(message string) {
-	fmt.Println(string(ColorRed), "\x1B[1m", message, string(ColorReset))
+	fmt.Println(string(ColorRed), message, string(ColorReset))
 }
 
-func Count_pos() int {
+func Count_Positional_Vars() int {
 	var arg_len int = len(os.Args[1:])
 	return arg_len
 }
@@ -54,17 +55,7 @@ func Count_pos() int {
 // uninstall := "--uninstall"
 // update := "--update"
 
-func Encrypt_san(arguments int, filename string, object_name string, object_owner string) string {
-
-	Warning(filename)
-	Warning(object_name)
-	Warning(object_owner)
-	// Checking if the file name exists
-
-	return "Valid"
-}
-
-func Invalid_op() {
+func Invalid_Op() {
 	Break("Invalid option or number of arguments given run encore -h for help")
 }
 
@@ -73,9 +64,9 @@ func WriteToFile(data string, location string, append string) {
 	var d = []byte(data)
 	// checking if file exists
 	if append == "write" {
-		if Existence(location) == true {
+		if Existence(location) {
 			// default is to overwrite the file
-			if DeleteFile(location) == true { // file was deleted
+			if DeleteFile(location) { // file was deleted
 
 				file, err := os.OpenFile(location, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0400)
 				if err != nil {
@@ -128,7 +119,7 @@ func WriteToFile(data string, location string, append string) {
 }
 
 func DeleteFile(filename string) bool {
-	if Existence(filename) == true {
+	if Existence(filename) {
 		del := os.Remove(filename)
 		if del != nil {
 			Handle_err(del, "warn")
