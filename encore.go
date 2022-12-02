@@ -1,6 +1,7 @@
 package main
 
 import (
+	enc "encore/encrypt"
 	def "encore/functions"
 	ins "encore/install"
 	sys "encore/system"
@@ -28,6 +29,7 @@ func main() {
 	switch os.Args[1] {
 	case "-d":
 		min_arguments(3)
+		sys.Break("Not implemented")
 
 	case "-h":
 		min_arguments(1)
@@ -42,7 +44,9 @@ func main() {
 		var object_owner string = os.Args[2]
 		var object_name string = os.Args[3]
 
-		def.Read(object_owner, object_name)
+		if def.Read(object_owner, object_name) {
+			sys.Pass("DONE")
+		}
 
 	case "-t":
 		// sys.Test1()
@@ -58,7 +62,11 @@ func main() {
 		// def.Write_log("hello world")
 		// sys.Warning(enc.Test())
 		// enc.Decrypt("2a07e90227936dc7e5b5b43d193aad955b6df34eecc4478393c1d70b3b3520586c343867386c616b6632346b3832316893c0c054c3e35a451cd3067e04decd0ba1789407da0d074061ee62a36f7e3c95", "9134425d9lc6e8t4sg7egm0135trx2w9")
-		sys.Pass(def.Fetch_keys("99"))
+		// sys.Pass(def.Fetch_keys("99"))
+		var key_data string = def.Fetch_keys("3159")
+		var data string = "06bb31cb1b53c69e918f886ad9e3b25e2824561fae247d1d5d8b589010a53fcf4ac875c0b4bfd918706b7fc43b66f13f394128f5a3e63ddac6819f2710542b42f243fe8d29a97597a5e833591188793b66b12ef55288822b2b66bc1c5aaf35e6403ccbd0c8ee13740ad7d32101857aa93c49e7d2a0d59d313343a7006c137a05d244a73175c20c999662948f078f9729a32e9890d1d5266aec5216efea3bbeb185124cb92f9306d71e8c1f9682cd5dedccx9dcjyk55sji5e51ca9759f3743d9ad5be38c06df44ea3c2de03e4e6a1ba6bdb2aa62b2682e466" //a
+
+		sys.Warning(enc.Decrypt(data, key_data))
 
 		// right now this is for developemnt but it'll have an extended list of system tests
 

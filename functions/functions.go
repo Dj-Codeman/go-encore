@@ -16,6 +16,27 @@ import (
 	"time"
 )
 
+type Secret_Data_Index struct {
+	Version string `json:"version"`
+	Name    string `json:"object_name"`
+	Owner   string `json:"object_owner"`
+	Key     string `json:"key"`
+	Uid     string `json:"uid"`
+	Path    string `json:"origin_path"`
+	Dir     string `json:"secret_path"`
+	// maybe later
+	// Hash    string `json:"hash"`
+}
+
+// creating a slut to contain the read json data
+type Key_Index struct {
+	Hash        string `json:"hash"`
+	Parent      string `json:"parent"`
+	Location    string `json:"location"`
+	Number      string `json:"number"`
+	Key_version string `json:"version"`
+}
+
 func Relazy() {
 	fmt.Println("")
 }
@@ -69,14 +90,6 @@ func Uninstall_Help() {
 
 func Generate_keys() {
 	sys.Pass("Regenerating keys and indexs")
-	// creating a slut to contain the read json data
-	type Key_Index struct {
-		Hash        string `json:"hash"`
-		Parent      string `json:"parent"`
-		Location    string `json:"location"`
-		Number      string `json:"number"`
-		Key_version string `json:"version"`
-	}
 
 	var master_json_directory string = cnf.Plnjson + "/" + "master.json"
 
@@ -149,14 +162,6 @@ func find_de_way(key string) string {
 }
 
 func Fetch_keys(key string) string {
-	// creating a slut to contain the read json data
-	type Key_Index struct {
-		Hash        string `json:"hash"`
-		Parent      string `json:"parent"`
-		Location    string `json:"location"`
-		Number      string `json:"number"`
-		Key_version string `json:"version"`
-	}
 
 	var schrodingers_path string = find_de_way(key)
 
@@ -193,22 +198,58 @@ func Fetch_keys(key string) string {
 
 }
 
-func Read(data string, key string) bool {
-	// This is the part that will read stuff
-	// do some validation
+func Read(object_owner string, object_name string) bool {
 
-	// create the temporary file in datadir
+	// Creating the path to the encrypted json file
+	var encrypted_json_path string = cnf.Encjson + "/" + object_owner + "-" + object_name + ".json"
 
-	// decrypt the data
+	// decrypting the json data
+	// getting the ciphertext from the json
+	encrypted_json_bytes, _ := ioutil.ReadFile(encrypted_json_path)
+	var encrypted_json_data string = string(encrypted_json_bytes)
 
-	//  write to the temp file
+	// getting the systemkey
+	var systemkey_data string = Fetch_keys("systemkey")
+
+	// Getting the plaintext json
+	var decrypted_json_data string = enc.Decrypt(encrypted_json_data, systemkey_data)
+	// to unmarshall json data the format must be in bytes when passed to the function
+	var decrypted_json_bytes []byte = []byte(decrypted_json_data)
+
+	// initializing new strut for the data
+	var decryption_index Secret_Data_Index
+
+	// unpacking the data to the strut
+	msg := json.Unmarshal(decrypted_json_bytes, &decryption_index)
+	if msg != nil {
+		sys.Handle_err(msg, "break")
+	}
+
+	// getting variables
+
+	// key data
+	var index_key string = decryption_index.Key
+	var index_key_data string = Fetch_keys(index_key)
+
+	// file data
+	encrypted_data_bytes, _ := ioutil.ReadFile(decryption_index.Dir)
+	var index_encrypted_data string = string(encrypted_data_bytes)
+
+	// decrypting data
+	var decrypted_secret_data string = enc.Decrypt(index_encrypted_data, index_key_data)
 
 	// depending on config file replace the original file
+	if cnf.Re_place {
+		var index_plain_directory string = decryption_index.Path
+		sys.WriteToFile(decrypted_secret_data, index_plain_directory, "write")
+		// add function to save and retrive the permissions and ownership
+		// set_uid(index_plain_directory)
+	} else {
+		var index_plain_directory string = cnf.Datadir + "/" + decryption_index.Owner + "-" + decryption_index.Name
+		sys.WriteToFile(decrypted_secret_data, index_plain_directory, "write")
+		// set_uid(index_plain_directory)
+	}
 
-	// return bool for status
-
-	var real_shit string = enc.Decrypt(data, key)
-	sys.Pass(real_shit)
 	return true
 }
 
@@ -278,18 +319,6 @@ func Write_preperation(dirty_object_path string, dirty_object_owner string, dirt
 func Write(object_path string, object_owner string, object_name string) bool {
 	rand.Seed(time.Now().UnixNano())
 
-	type Secret_Data_Index struct {
-		Version string `json:"version"`
-		Name    string `json:"object_name"`
-		Owner   string `json:"object_owner"`
-		Key     string `json:"key"`
-		Uid     string `json:"uid"`
-		Path    string `json:"origin_path"`
-		Dir     string `json:"data_path"`
-		// maybe later
-		// Hash    string `json:"hash"`
-	}
-
 	// turn this into a checksum ???
 	var key_int int = rand.Intn(cnf.Key_max - cnf.Key_cur + 1)
 	var key_data string = Fetch_keys(strconv.Itoa(key_int))
@@ -305,10 +334,43 @@ func Write(object_path string, object_owner string, object_name string) bool {
 	data_index.Uid = uid_data
 	data_index.Path = object_path
 	data_index.Dir = encrypted_data_path
-	fmt.Print(data_index)
 
-	// sys.Pass(enc.Encrypt(data, key))
-	// sys.Pass(key)
+	var plain_json string = cnf.Encjson + "/" + object_owner + "-" + object_name + ".jn"
+	var encrypted_json string = cnf.Encjson + "/" + object_owner + "-" + object_name + ".json"
+
+	// writing the index file
+	bytes, _ := json.MarshalIndent(data_index, "", "  ")
+	sys.WriteToFile(string(bytes), plain_json, "write")
+
+	// Read the written file to a variable
+	plain_json_bytes, _ := ioutil.ReadFile(plain_json)
+
+	// Getting the bytes from the file given
+	plain_file_bytes, _ := ioutil.ReadFile(object_path)
+	var plain_file_string string = string(plain_file_bytes)
+
+	// Creating ciphertext from the file we read
+	var cipher_plain string = enc.Encrypt(plain_file_string, key_data)
+	sys.WriteToFile(cipher_plain, encrypted_data_path, "write")
+	if !cnf.Soft_move {
+		if !sys.DeleteFile(object_path) {
+			sys.Break("File wasn't delete idk how tf you got here")
+		}
+	}
+
+	// Generating the data in the correct formats
+	var plain_json_data string = string(plain_json_bytes)
+	var systemkey_data string = Fetch_keys("systemkey")
+
+	// Creating ciphertext from the plain json map
+	var cipher_json string = enc.Encrypt(plain_json_data, systemkey_data)
+	sys.WriteToFile(cipher_json, encrypted_json, "write")
+
+	// checking if plain text file was erased
+	if !sys.DeleteFile(plain_json) {
+		sys.Break("The file was not delete and the error wasn't caught")
+	}
+
 	return true
 }
 

@@ -55,7 +55,7 @@ const (
 	//  set 1 to use cp instead of mv when gatheing files to encrypt
 	//  default = false
 
-	Soft_move bool = false
+	Soft_move bool = true
 
 	//  re-place file
 	//  the original path of files are stored when encrypted
