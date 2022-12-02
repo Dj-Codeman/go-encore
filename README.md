@@ -8,7 +8,7 @@ WHAT IS THIS ?
 
 IS THIS COMPATIBLE WITH THE BASH VERSION ?
 * No-ish* The concept is the same in go, python, and bash. But this version has a few diffrences.
-  1. I finnaly realized how mush i was shooting myself in the foot with my variable names
+  1. I finnaly realized how much i was shooting myself in the foot with my variable names
   2. While learning about aes-cbc encryption the implementation I'm using currently only
     allows 32 byte keys. So while technically It would be possible to import the folders and 
     use diffrent versions to read and write the files. I havn't tryed it and it sounds like a bad idea
