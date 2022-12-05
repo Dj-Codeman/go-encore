@@ -388,6 +388,12 @@ func Initialize() {
 
 	Start_log()
 
+	// making folders for first time run
+	folders := [5]string{cnf.Datadir, cnf.Encjson, cnf.Plnjson, cnf.Keydir, cnf.Logdir}
+	for i := 0; i <= len(folders); i++ {
+		sys.MakeFolder(folders[i])
+	}
+
 	Write_log("Started initialization")
 
 	status, msg := enc.Test()

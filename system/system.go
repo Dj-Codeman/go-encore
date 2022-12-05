@@ -135,6 +135,23 @@ func DeleteFile(filename string) bool {
 	}
 }
 
+func MakeFolder(path string) bool {
+	if !Existence(path) {
+		// folder doesn't exist make one
+		err := os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			Break("An error has occoured can't make folder" + path)
+			return false
+		} else {
+			return true
+		}
+	} else {
+		Warning("Folder already exists skipping" + path)
+		return true
+	}
+
+}
+
 func Existence(filename string) bool {
 	_, error := os.Stat(filename)
 
