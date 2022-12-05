@@ -379,7 +379,7 @@ func Destroy() {
 }
 
 func Version() string {
-	var ver = "G0.02"
+	var ver = "G0.40"
 	return ver
 }
 
@@ -390,7 +390,7 @@ func Initialize() {
 
 	// making folders for first time run
 	folders := [5]string{cnf.Datadir, cnf.Encjson, cnf.Plnjson, cnf.Keydir, cnf.Logdir}
-	for i := 0; i <= len(folders); i++ {
+	for i := 0; i <= len(folders)-1; i++ {
 		sys.MakeFolder(folders[i])
 	}
 

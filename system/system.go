@@ -140,7 +140,7 @@ func MakeFolder(path string) bool {
 		// folder doesn't exist make one
 		err := os.MkdirAll(path, os.ModePerm)
 		if err != nil {
-			Break("An error has occoured can't make folder" + path)
+			Break("An error has occoured can't make folder : " + path)
 			return false
 		} else {
 			return true
