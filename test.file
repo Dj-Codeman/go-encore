@@ -1,0 +1,9 @@
+This is a test text file. The purpose of this file, 
+is to verify the decrypt function across installs 
+There's also some SpIcY charathers in here because
+i wasn't sure how changing string types in go would work
+1234567890
+    9   5   1   8
+!@#$%^&*()_+=-{}|\][:"';p<>?/.,~`*-]
+
+key used j416wlr6345t331a74sp2iua69660886

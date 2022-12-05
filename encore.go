@@ -48,27 +48,18 @@ func main() {
 			sys.Pass("DONE")
 		}
 
+	case "-s": // Sanity test
+		var key_data string = "j416wlr6345t331a74sp2iua69660886"
+		var msg_data string = "8c9df5863be41519bc915585451b5c77acf646dbb83112737c518e155fb113f24821f34687293baa4fb2a57257aba5d3c2123e5afc666f2e87bda91a1536b054e5fa95945b33f66bdd9ab94010813572a5f84e5053d41766535da6ef3744882e05d77c667d4c5f32420c4c07c5f63a25fe326c4a20b4c3356f74c2e78fdd83b70cdb25e34bc96af5a94c8abf1bd12d050f6971be707ebae3b5124f98fe9b2a8095c74b72556483a488f8ac2c76059d4d308ac09190819f91fa1c072ab32d51b40e8de28478d04e419f6185e216eaacbb87f55b171821d53f1c7cf12bca63520c7b4a1dfe255b306581983b9d4435bfed03cff80ce1c0338c3cfabb662bc9944bdece94aedf344d1e49dbaef09da327915e70beaac2a1401778d6c947ac7900e0919766b18df61945a70b7340977959c8036422700ec8c7c15afbe4ebc7be2204608aa6cccf122241f0ed8ccbb8717028mqyuja3r23kwltkdced7be29ecf7b515c6f579e503b3b8691022f91937670c5e65a3992e4642f85e"
+		sys.Warning(enc.Decrypt(msg_data, key_data))
+		sys.Help("See your not crazy")
+
 	case "-t":
-		// sys.Test1()
-		// enc.Encrypt()
-		// sys.Pass(enc.Encrypt("This is a very secret message, Treat this with care"))
-		// ciphertest, key := enc.Encrypt(" 0dg3edetyhtiyhgzovglekukcpqy2ird5qpk7o1getdkmbjt659oivqs8z7un0y5220nx0cto4dug0hf18xh8ohiloc9zb342mfisub35ai1300agujx5bwxwqpnguw3")
-		// sys.Pass(enc.Decrypt(ciphertest, key))
-		// 1 def.Write()
-		// var data string = "e7fdc50d0142fdb10453b642d7ab5f687vvaw84zhdfu7nczbf639016179fa5fa2f1296ba2873f4f67428c387573a6723aeb4ed4ef0ec7d22"
-		// var key string = "j416wlr6345t331a74sp2iua69660886"
-		// def.Read(data, key)
-		// def.Start_log()
-		// def.Write_log("hello world")
-		// sys.Warning(enc.Test())
-		// enc.Decrypt("2a07e90227936dc7e5b5b43d193aad955b6df34eecc4478393c1d70b3b3520586c343867386c616b6632346b3832316893c0c054c3e35a451cd3067e04decd0ba1789407da0d074061ee62a36f7e3c95", "9134425d9lc6e8t4sg7egm0135trx2w9")
-		// sys.Pass(def.Fetch_keys("99"))
-		var key_data string = def.Fetch_keys("3159")
-		var data string = "06bb31cb1b53c69e918f886ad9e3b25e2824561fae247d1d5d8b589010a53fcf4ac875c0b4bfd918706b7fc43b66f13f394128f5a3e63ddac6819f2710542b42f243fe8d29a97597a5e833591188793b66b12ef55288822b2b66bc1c5aaf35e6403ccbd0c8ee13740ad7d32101857aa93c49e7d2a0d59d313343a7006c137a05d244a73175c20c999662948f078f9729a32e9890d1d5266aec5216efea3bbeb185124cb92f9306d71e8c1f9682cd5dedccx9dcjyk55sji5e51ca9759f3743d9ad5be38c06df44ea3c2de03e4e6a1ba6bdb2aa62b2682e466" //a
-
-		sys.Warning(enc.Decrypt(data, key_data))
-
 		// right now this is for developemnt but it'll have an extended list of system tests
+		sys.Warning("This will take 50+ mins. On lower spec machines this might not run")
+		sys.Warning("If you don't intend on encrypting files larger than 500mb you don't need to run this")
+		sys.Warning("If you are encrypting bigger files just sit back and wait for this the finish")
+		enc.Larger_test()
 
 	case "--update":
 		min_arguments(1)

@@ -199,4 +199,43 @@ func Test() (string, string) {
 	return string("Pass"), ""
 }
 
+func Larger_test() (string, string) {
+	//  rework this large file test RUN TIME IS FUCKING
+
+	file_array := [3]int64{9518, 1024000000, 3000000000}
+	// ideally nobody running a FAT fs wouldnever run this because large file sizes
+	// but just incase the largest file is 3gb not 4
+	var charather_range string = "abcdefghijklmnopqrstuvwxyz1234567890"
+
+	for i := 0; i < len(file_array); i++ {
+		var Big_Data_Bytes []byte = make([]byte, file_array[i])
+
+		var k int
+		for k = range Big_Data_Bytes {
+			Big_Data_Bytes[k] = charather_range[rand.Intn(len(charather_range))]
+		}
+		var Big_Data_Legnth int = len(Big_Data_Bytes) / 1024
+		var Big_Data_Name string = "/tmp/encore/" + hex.EncodeToString([]byte(strconv.Itoa(Big_Data_Legnth))) + ".tmp"
+		// write bytes to name
+		// make folder if not exist /tmp/encore
+		sys.WriteToFile(string(Big_Data_Bytes), Big_Data_Name, "write")
+
+		fileBytes, _ := ioutil.ReadFile(Big_Data_Name)
+		// sys.Handle_err(err, "break")
+
+		var key string = Create_key()
+		var cipher_text string = Encrypt(string(fileBytes), key)
+
+		var Decrypted_Data string = Decrypt(cipher_text, key)
+
+		if Decrypted_Data != string(fileBytes) {
+			var msg string = "Error validating file :" + Big_Data_Name
+
+			return "Failed", msg
+		}
+	}
+
+	return string("Passed"), ""
+}
+
 // -aes-256-cbc
