@@ -389,7 +389,7 @@ func Initialize() {
 	Start_log()
 
 	// making folders for first time run
-	folders := [5]string{cnf.Datadir, cnf.Encjson, cnf.Plnjson, cnf.Keydir, cnf.Logdir}
+	folders := [6]string{cnf.Datadir, cnf.Encjson, cnf.Plnjson, cnf.Keydir, cnf.Logdir, "/tmp/encore"}
 	for i := 0; i <= len(folders)-1; i++ {
 		sys.MakeFolder(folders[i])
 	}

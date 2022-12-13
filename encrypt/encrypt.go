@@ -205,6 +205,8 @@ func Larger_test() (string, string) {
 	file_array := [3]int64{9518, 1024000000, 3000000000}
 	// ideally nobody running a FAT fs wouldnever run this because large file sizes
 	// but just incase the largest file is 3gb not 4
+	// OOM This doesnt finish find a better way to do it
+
 	var charather_range string = "abcdefghijklmnopqrstuvwxyz1234567890"
 
 	for i := 0; i < len(file_array); i++ {
@@ -237,5 +239,3 @@ func Larger_test() (string, string) {
 
 	return string("Passed"), ""
 }
-
-// -aes-256-cbc
