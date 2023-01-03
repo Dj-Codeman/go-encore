@@ -381,7 +381,7 @@ func Destroy() {
 }
 
 func Version() string {
-	var ver = "G0.40"
+	var ver = "G0.50"
 	return ver
 }
 
