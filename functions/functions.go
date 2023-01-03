@@ -49,15 +49,17 @@ func Timestamp() string {
 
 func Start_log() {
 	sys.Pass("New log started")
+	var log_dir string = cnf.Logdir + "/general"
 	var msg string = "LOG START @ " + Timestamp() + "\n\n"
-	sys.WriteToFile(msg, cnf.Logdir, "write")
+	sys.WriteToFile(msg, log_dir, "write")
 }
 
 func Write_log(data string) {
 	var timestamp string = Timestamp()
+	var log_dir string = cnf.Logdir + "/general"
 	var log_data string = data + " @ " + timestamp + "\n\n"
 
-	sys.WriteToFile(log_data, cnf.Logdir, "append")
+	sys.WriteToFile(log_data, log_dir, "append")
 }
 
 func Show_help() {
@@ -394,7 +396,7 @@ func Initialize() {
 		sys.MakeFolder(folders[i])
 	}
 
-	Write_log("Started initialization")
+	Write_log("Running Encryption Tests")
 
 	status, msg := enc.Test()
 	if status == "Pass" {
@@ -406,9 +408,11 @@ func Initialize() {
 
 	Generate_keys()
 
-	sys.Pass("Testing key fetch functionality")
-	// make this a rand int
-	var msg1 string = "Random key fetched : " + Fetch_keys("5")
+	sys.Pass("Running Key Fetch Functionallity Test")
+
+	var Random_Key int = rand.Intn(cnf.Key_max - cnf.Key_cur + 1)
+	var msg1 string = "Random key fetched : " + Fetch_keys(Random_Key)
+
 	sys.Pass(msg1)
 	sys.Pass("DONE")
 

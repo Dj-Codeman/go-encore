@@ -38,7 +38,7 @@ const (
 
 	// log dir
 
-	Logdir string = "/var/log/encore/general"
+	Logdir string = "/var/log/encore"
 
 	//  key_max the limit of keys to generate
 	//  default=1000
