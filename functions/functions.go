@@ -411,7 +411,7 @@ func Initialize() {
 	sys.Pass("Running Key Fetch Functionallity Test")
 
 	var Random_Key int = rand.Intn(cnf.Key_max - cnf.Key_cur + 1)
-	var msg1 string = "Random key fetched : " + Fetch_keys(Random_Key)
+	var msg1 string = "Random key fetched : " + Fetch_keys(fmt.Sprint(Random_Key))
 
 	sys.Pass(msg1)
 	sys.Pass("DONE")
