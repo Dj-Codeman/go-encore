@@ -575,7 +575,7 @@ func Create_password() {
 	var password_bytes []byte = []byte(psswd_1)
 
 	//running the password derived from key function
-	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 620000, 16, sha512.New)
+	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 12400000, 16, sha512.New)
 
 	// Converting to hex to keep the storage format the same
 	var password_key = hex.EncodeToString(pdk)
@@ -594,7 +594,7 @@ func Check_password() string {
 	var password_bytes []byte = []byte(password)
 
 	//running the password derived from key function
-	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 620000, 16, sha512.New)
+	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 12400000, 16, sha512.New)
 	var password_key = hex.EncodeToString(pdk)
 
 	// use the fetch key function
