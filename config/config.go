@@ -36,6 +36,15 @@ const (
 
 	Systemkey string = "/etc/systemkey.dk"
 
+	//	The user key is derived from the users specific password
+	//	This is the key used to encrypt the files them selfs while
+	//	the maps and indexs will still use the system key
+	//  if this key is missing on script call all file in:
+	//  $datadir will be illegible
+	//  IF THIS KEY IS DELETED ALL DATA IS CONSIDERED LOST
+
+	Userkey string = "/etc/userkey.dk"
+
 	// log dir
 
 	Logdir string = "/var/log/encore"
@@ -43,7 +52,7 @@ const (
 	//  key_max the limit of keys to generate
 	//  default=1000
 
-	Key_max int = 10000
+	Key_max int = 1000
 
 	//  Works like a key min value
 	//  by key_cur and key_max the range from which keys are picked

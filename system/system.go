@@ -1,11 +1,14 @@
 package system
 
 import (
+	"bufio"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
+	"strings"
+	"syscall"
 )
 
 const (
@@ -24,20 +27,24 @@ func Warning(message string) {
 
 func Break(message string) {
 	fmt.Println(string(ColorRed), message, string(ColorReset))
-	os.Exit(0)
+	os.Exit(1)
 }
 
 func Pass(message string) {
 	fmt.Println(string(ColorGreen), message, string(ColorReset))
+}
 
+func Fail(message string) {
+	fmt.Println(string(ColorRed), message, string(ColorReset))
 }
 
 func Help(message string) {
 	fmt.Println(string(ColorBlue), message, string(ColorReset))
 }
 
-func Red(message string) {
-	fmt.Println(string(ColorRed), message, string(ColorReset))
+func Dump(message string) {
+	fmt.Println(string(ColorBlue), string(ColorBold), message, string(ColorReset))
+	os.Exit(0)
 }
 
 func Count_Positional_Vars() int {
@@ -146,7 +153,7 @@ func MakeFolder(path string) bool {
 			return true
 		}
 	} else {
-		Warning("Folder already exists skipping" + path)
+		Warning("Path exists : " + path)
 		return true
 	}
 
@@ -192,4 +199,68 @@ func Handle_err(msg error, action string) {
 		Warning(error_message)
 	}
 
+}
+
+func Input_normal(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stderr, label+" ")
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	return strings.TrimSpace(s)
+}
+
+func Input_secret(prompt string) string {
+	fmt.Print(prompt)
+
+	// Common settings and variables for both stty calls.
+	attrs := syscall.ProcAttr{
+		Dir:   "",
+		Env:   []string{},
+		Files: []uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()},
+		Sys:   nil}
+	var ws syscall.WaitStatus
+
+	// Disable echoing.
+	pid, err := syscall.ForkExec(
+		"/bin/stty",
+		[]string{"stty", "-echo"},
+		&attrs)
+	if err != nil {
+		panic(err)
+	}
+
+	// Wait for the stty process to complete.
+	_, err = syscall.Wait4(pid, &ws, 0, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	// Echo is disabled, now grab the data.
+	reader := bufio.NewReader(os.Stdin)
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		panic(err)
+	}
+
+	// Re-enable echo.
+	pid, err = syscall.ForkExec(
+		"/bin/stty",
+		[]string{"stty", "echo"},
+		&attrs)
+	if err != nil {
+		panic(err)
+	}
+
+	// Wait for the stty process to complete.
+	_, err = syscall.Wait4(pid, &ws, 0, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	return strings.TrimSpace(text)
 }

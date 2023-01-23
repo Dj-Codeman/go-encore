@@ -5,9 +5,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
-	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	sys "encore/system"
+	"hash"
 	"io/ioutil"
 	"math/rand"
 	"strconv"
@@ -17,7 +18,7 @@ import (
 
 func Create_key() string {
 	rand.Seed(time.Now().UnixNano())
-	var charather_range string = "abcdefghijklmnopqrstuvwxyz123456789012345678901324569870"
+	var charather_range string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789012345678901324569870"
 
 	var key_bytes []byte = make([]byte, 32)
 
@@ -34,7 +35,7 @@ func Create_key() string {
 func Create_iv() []byte {
 	// generating initial vector
 	rand.Seed(time.Now().UnixNano())
-	var charather_range string = "abcdefghijklmnopqrstuvwxyz1234567890"
+	var charather_range string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789012345678901324569870"
 	// for len in iv number pick randon byte charathers
 	var iv_bytes []byte = make([]byte, 16)
 	for i := range iv_bytes {
@@ -79,8 +80,9 @@ func Encrypt(input string, key string) string {
 
 	// generate Hmac
 	// 64 charathers
+	// NOW WITH 64 more bytes
 
-	var hash = hmac.New(sha256.New, []byte(hex_cipher_text))
+	var hash = hmac.New(sha512.New, []byte(hex_cipher_text))
 	var hmac string = hex.EncodeToString(hash.Sum(nil))
 	// appending hmac to file end
 	hex_cipher_text += hmac
@@ -91,13 +93,13 @@ func Encrypt(input string, key string) string {
 func Decrypt(input string, key string) string {
 
 	// getting the hmac
-	var old_hmac string = input[len(input)-64:]
+	var old_hmac string = input[len(input)-128:]
 
 	// removing the hmac from the file
 	var cipher_text_iv string = strings.TrimSuffix(input, old_hmac)
 
 	// regenerating new hmac and verifing
-	hash := hmac.New(sha256.New, []byte(cipher_text_iv))
+	hash := hmac.New(sha512.New, []byte(cipher_text_iv))
 	var new_hmac string = hex.EncodeToString([]byte(hash.Sum(nil)))
 
 	// Eventually find a better comparison then if
@@ -134,8 +136,9 @@ func Decrypt(input string, key string) string {
 		return data
 
 	} else {
-		sys.Red("Error, unable to drcrypt file. It might have been encrypted")
+		sys.Fail("Error, unable to drcrypt file. It might have been encrypted")
 		sys.Break("by a diffrent key, or it's been tampered with")
+
 	}
 	return string("What in the firery hell happened here")
 }
@@ -155,9 +158,10 @@ func PKCS5UnPadding(src []byte) []byte {
 func Test() (string, string) {
 
 	// internal test
-	sys.Pass("Running internal testing")
+	sys.Pass("\n Running internal testing")
 	// File sizes we're checking for
-	file_array := [4]int32{9518, 10000000, 100000000, 500000000}
+	file_array := [4]int32{9518, 9518000, 9518000, 9518000}
+	// file_array := [4]int32{9518, 10000000, 100000000, 500000000}
 
 	// Any test bigger than 500mb takes literall minutes to run
 	// I want to keep the normal initializating quick
@@ -238,4 +242,42 @@ func Larger_test() (string, string) {
 	}
 
 	return string("Passed"), ""
+}
+
+// Copied pbkdf copied from the go site :: put link
+func Pbkdf(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte {
+	prf := hmac.New(h, password)
+	hashLen := prf.Size()
+	numBlocks := (keyLen + hashLen - 1) / hashLen
+
+	var buf [4]byte
+	dk := make([]byte, 0, numBlocks*hashLen)
+	U := make([]byte, hashLen)
+	for block := 1; block <= numBlocks; block++ {
+		// N.B.: || means concatenation, ^ means XOR
+		// for each block T_i = U_1 ^ U_2 ^ ... ^ U_iter
+		// U_1 = PRF(password, salt || uint(i))
+		prf.Reset()
+		prf.Write(salt)
+		buf[0] = byte(block >> 24)
+		buf[1] = byte(block >> 16)
+		buf[2] = byte(block >> 8)
+		buf[3] = byte(block)
+		prf.Write(buf[:4])
+		dk = prf.Sum(dk)
+		T := dk[len(dk)-hashLen:]
+		copy(U, T)
+
+		// U_n = PRF(password, U_(n-1))
+		for n := 2; n <= iter; n++ {
+			prf.Reset()
+			prf.Write(U)
+			U = U[:0]
+			U = prf.Sum(U)
+			for x := range U {
+				T[x] ^= U[x]
+			}
+		}
+	}
+	return dk[:keyLen]
 }
