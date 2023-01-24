@@ -252,6 +252,11 @@ func Fetch_keys(key string) string {
 
 }
 
+func Fetch_writting_key(key string, userkey string) string {
+	var final_key []byte = enc.Pbkdf([]byte(key), []byte(userkey), 1052600, 16, sha512.New)
+	return string(final_key)
+}
+
 func Read(object_owner string, object_name string) bool {
 
 	var log string = "Reading :"
@@ -299,7 +304,7 @@ func Read(object_owner string, object_name string) bool {
 	var index_encrypted_data string = string(encrypted_data_bytes)
 
 	// decrypting data
-	var decrypted_secret_data string = enc.Decrypt(index_encrypted_data, index_key_data)
+	var decrypted_secret_data string = enc.Decrypt(index_encrypted_data, Fetch_writting_key(index_key_data, userkey_data))
 
 	// depending on config file replace the original file
 	if cnf.Re_place {
@@ -400,8 +405,9 @@ func Write(object_path string, object_owner string, object_name string) bool {
 	Write_log(log)
 
 	// turn this into a checksum ???
+	var userkey_data string = Authenthicate()
 	var key_int int = rand.Intn(cnf.Key_max - cnf.Key_cur + 1)
-	var key_data string = Fetch_keys(strconv.Itoa(key_int))
+	var key_data string = Fetch_writting_key(Fetch_keys(strconv.Itoa(key_int)), userkey_data)
 	var uid_bytes []byte = []byte(key_data)[0:9]
 	var uid_data string = base64.StdEncoding.EncodeToString(uid_bytes)
 	var encrypted_data_path string = cnf.Datadir + "/" + uid_data
@@ -433,7 +439,6 @@ func Write(object_path string, object_owner string, object_name string) bool {
 
 	// Generating the data in the correct formats
 	var plain_json_data string = string(plain_json_bytes)
-	var userkey_data string = Authenthicate()
 
 	// Creating ciphertext from the plain json map
 	var cipher_json string = enc.Encrypt(plain_json_data, userkey_data)
@@ -575,7 +580,7 @@ func Create_password() {
 	var password_bytes []byte = []byte(psswd_1)
 
 	//running the password derived from key function
-	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 12400000, 16, sha512.New)
+	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 951800, 16, sha512.New)
 
 	// Converting to hex to keep the storage format the same
 	var password_key = hex.EncodeToString(pdk)
@@ -594,7 +599,7 @@ func Check_password() string {
 	var password_bytes []byte = []byte(password)
 
 	//running the password derived from key function
-	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 12400000, 16, sha512.New)
+	var pdk []byte = enc.Pbkdf(password_bytes, []byte(Fetch_keys("systemkey")), 951800, 16, sha512.New)
 	var password_key = hex.EncodeToString(pdk)
 
 	// use the fetch key function

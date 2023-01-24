@@ -50,9 +50,9 @@ const (
 	Logdir string = "/var/log/encore"
 
 	//  key_max the limit of keys to generate
-	//  default=1000
+	//  default=50000
 
-	Key_max int = 1000
+	Key_max int = 50000
 
 	//  Works like a key min value
 	//  by key_cur and key_max the range from which keys are picked
@@ -64,7 +64,7 @@ const (
 	//  set 1 to use cp instead of mv when gatheing files to encrypt
 	//  default = false
 
-	Soft_move bool = false
+	Soft_move bool = true
 
 	//  re-place file
 	//  the original path of files are stored when encrypted
