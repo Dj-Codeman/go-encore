@@ -9,6 +9,7 @@ import (
 	sys "encore/system"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"strconv"
 )
@@ -46,6 +47,13 @@ func main() {
 
 		// sub switch statement
 		switch os.Args[2] {
+		case "--current":
+
+			var userkey string = def.Authenthicate()
+			var randkey = def.Fetch_keys(strconv.Itoa(rand.Intn(cnf.Key_max - cnf.Key_cur + 1)))
+
+			sys.Dump(def.Fetch_writting_key(randkey, userkey))
+
 		case "--auth":
 			sys.Pass("Auth Testing :\n")
 

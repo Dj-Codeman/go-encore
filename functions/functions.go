@@ -252,8 +252,23 @@ func Fetch_keys(key string) string {
 
 }
 
+// Making the key to write files with
+func CreateHash(byteStr []byte) string {
+	// var hashVal hash.Hash
+	hashVal := sha512.New()
+	hashVal.Write(byteStr)
+
+	bytes := hashVal.Sum(nil)
+	return string(bytes)
+}
+
 func Fetch_writting_key(key string, userkey string) string {
-	var final_key []byte = enc.Pbkdf([]byte(key), []byte(userkey), 1052600, 16, sha512.New)
+
+	var prekey_0 string = key + userkey
+	var prekey_1 string = CreateHash([]byte(prekey_0))
+	// sys.Dump(prekey_1)
+
+	var final_key []byte = enc.Pbkdf([]byte(prekey_1), []byte(Fetch_keys("systemkey")), 1052600, 16, sha512.New)
 	return string(final_key)
 }
 
@@ -408,7 +423,7 @@ func Write(object_path string, object_owner string, object_name string) bool {
 	var userkey_data string = Authenthicate()
 	var key_int int = rand.Intn(cnf.Key_max - cnf.Key_cur + 1)
 	var key_data string = Fetch_writting_key(Fetch_keys(strconv.Itoa(key_int)), userkey_data)
-	var uid_bytes []byte = []byte(key_data)[0:9]
+	var uid_bytes []byte = []byte(enc.Create_iv())[0:9]
 	var uid_data string = base64.StdEncoding.EncodeToString(uid_bytes)
 	var encrypted_data_path string = cnf.Datadir + "/" + uid_data
 
@@ -422,12 +437,18 @@ func Write(object_path string, object_owner string, object_name string) bool {
 	data_index.Dir = encrypted_data_path
 
 	// var plain_json string = cnf.Encjson + "/" + object_owner + "-" + object_name + ".jn"
-	var encrypted_json string = cnf.Encjson + "/" + object_owner + "-" + object_name + ".json"
+	var encrypted_json_path string = cnf.Encjson + "/" + object_owner + "-" + object_name + ".json"
 
 	// writing the index file
 	plain_json_bytes, _ := json.MarshalIndent(data_index, "", "  ")
-	var plain_file_string string = string(plain_json_bytes)
+	var plain_json_data string = string(plain_json_bytes)
+	// Creating ciphertext from the plain json map
+	var cipher_json string = enc.Encrypt(plain_json_data, userkey_data)
+	sys.WriteToFile(cipher_json, encrypted_json_path, "write")
 
+	//
+	plain_file_bytes, _ := ioutil.ReadFile(object_path)
+	var plain_file_string string = string(plain_file_bytes)
 	// Creating ciphertext from the file we read
 	var cipher_plain string = enc.Encrypt(plain_file_string, key_data)
 	sys.WriteToFile(cipher_plain, encrypted_data_path, "write")
@@ -436,13 +457,6 @@ func Write(object_path string, object_owner string, object_name string) bool {
 			sys.Break("File wasn't deleted idk how tf you got here")
 		}
 	}
-
-	// Generating the data in the correct formats
-	var plain_json_data string = string(plain_json_bytes)
-
-	// Creating ciphertext from the plain json map
-	var cipher_json string = enc.Encrypt(plain_json_data, userkey_data)
-	sys.WriteToFile(cipher_json, encrypted_json, "write")
 
 	Write_log("Write successful")
 	return true
@@ -507,18 +521,19 @@ func Destroy(object_owner string, object_name string) bool {
 }
 
 func Version() string {
-	var ver = "G1.00"
+	var ver = "G1.01"
 	return ver
 }
 
 func Initialize() {
 	sys.Pass("Running Initialization \n")
 
+	sys.MakeFolder(cnf.Logdir)
 	Start_log()
 
 	sys.Pass("Creating Folders \n")
 	// making folders for first time run
-	folders := [6]string{cnf.Datadir, cnf.Encjson, cnf.Plnjson, cnf.Keydir, cnf.Logdir, "/tmp/encore"}
+	folders := [5]string{cnf.Datadir, cnf.Encjson, cnf.Plnjson, cnf.Keydir, "/tmp/encore"}
 	for i := 0; i <= len(folders)-1; i++ {
 		sys.MakeFolder(folders[i])
 	}
